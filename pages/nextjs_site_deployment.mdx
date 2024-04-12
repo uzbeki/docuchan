@@ -2,7 +2,7 @@
 NextJSで作られたアプリをデプロイするには、いくつかの方法があります。このリポジトリーでは、以下の方法を紹介します：
 📖 Docs: https://nextjs.org/docs/pages/building-your-application/deploying
 
-## 簡単な方法：Vercel
+## 簡単な方法：Vercel - beginner
 VercelはNextJSの公式パートナーで、簡単にデプロイすることができます。Githubリポジトリーと連携して、自動デプロイも可能です。
 Docs: https://vercel.com/docs/frameworks/nextjs  
 📟 Live Demo: 
@@ -10,9 +10,94 @@ Docs: https://vercel.com/docs/frameworks/nextjs
 ### Requirements
 - Githubアカウント
 - Vercelアカウント
-- Vercel CLI (Optional)
 
 ### Steps
 1. Githubリポジトリーを作成します。
 2. Vercelアカウントを作成します。
 3. Vercelにログインし、Githubリポジトリーを連携します。
+
+次は、ドメイン設定、環境変数の設定などを行います。そこは飛ばします。自分で試してみてください。
+簡単すぎであんまり勉強にならないので、次の方法を紹介します。
+
+## Deploying to VM - intermediate
+いつものように、AWSからEC2インスタンスを作成します。
+nginxをインストールして、リバースプロキシを設定します。
+その後、NextJSアプリをビルドして、nginxの設定ファイルを編集します。
+
+### Create EC2 Instance
+- AMI: Ubuntu Server 20.04 LTS (HVM), SSD Volume Type
+- Instance Type: t2.micro
+- Security Group: HTTP, HTTPS, SSH
+
+### Connect to EC2 Instance
+```bash
+ssh -t ubuntu@<your-ec2-public-ip>
+```
+
+### Install Nginx
+```bash
+sudo apt update && sudo apt upgrade -y && sudo apt install nginx -y
+```
+
+### Install NodeJS
+```bash
+# https://github.com/nodesource/distributions/blob/master/README.md#using-ubuntu-1
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - &&\
+sudo apt-get install -y nodejs
+```
+
+### Configure Nginx
+```bash
+sudo nano /etc/nginx/sites-available/default
+```
+
+```nginx
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+
+    server_name _;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+    }
+
+}
+```
+
+
+### Build NextJS App
+```bash
+npm run build
+npm run start
+```
+
+### Restart Nginx
+```bash
+sudo systemctl restart nginx
+```
+
+### Done
+Now you can access your NextJS app at `http://<your-ec2-public-ip>`
+
+### pm2
+### Install PM2
+```bash
+sudo npm install pm2 -g
+```
+### Start NextJS App
+```bash
+pm2 start npm --name "nextjs" -- start
+```
+
+## Standalone build - advanced
+NextJSアプリをビルドして、静的ファイルを生成します。そのファイルをどこかにアップロードして、サーバーを立ち上げるだけです。
+
+### nextConfig を設定
+Docs: https://template.nextjs.guide/app/api-reference/next-config-js/output
+```js
+module.exports = {
+  output: 'standalone',
+}https://github.com/uzbeki/docuchan.git
+```https://github.com/uzbeki/docuchan.git
